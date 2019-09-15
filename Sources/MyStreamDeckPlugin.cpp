@@ -115,11 +115,143 @@ void MyStreamDeckPlugin::UpdateTimer()
 void MyStreamDeckPlugin::KeyDownForAction(const std::string& inAction, const std::string& inContext, const json &inPayload, const std::string& inDeviceID)
 {
 	// Nothing to do
+	DebugPrint("KeyDownForAction");
+	//mConnectionManager->LogMessage("Test1");
+
+	WSADATA wsa;
+	long rc;
+	SOCKET s;
+	SOCKADDR_IN addr;
+	char buf[256];
+
+	// Winsock starten
+	rc = WSAStartup(MAKEWORD(2, 0), &wsa);
+	if (rc != 0)
+	{
+		DebugPrint("Fehler: startWinsock, fehler code: %d\n", rc);
+		return;
+	}
+	else
+	{
+		DebugPrint("Winsock gestartet!\n");
+	}
+
+	// Socket erstellen
+	s = socket(AF_INET, SOCK_STREAM, 0);
+	if (s == INVALID_SOCKET)
+	{
+		DebugPrint("Fehler: Der Socket konnte nicht erstellt werden, fehler code: %d\n", WSAGetLastError());
+		return;
+	}
+	else
+	{
+		DebugPrint("Socket erstellt!\n");
+	}
+
+	// Verbinden
+	memset(&addr, 0, sizeof(SOCKADDR_IN)); // zuerst alles auf 0 setzten
+	addr.sin_family = AF_INET;
+	addr.sin_port = htons(25639);
+	inet_pton(AF_INET, "127.0.0.1", &(addr.sin_addr));
+
+	rc = connect(s, (SOCKADDR*)&addr, sizeof(SOCKADDR));
+	if (rc == SOCKET_ERROR)
+	{
+		DebugPrint("Fehler: connect gescheitert, fehler code: %d\n", WSAGetLastError());
+		return;
+	}
+	else
+	{
+		DebugPrint("Verbunden mit 127.0.0.1..\n");
+	}
+
+
+	// Daten austauschen
+	//strcpy_s(buf, 5, "help");
+	char buf2[256] = "help\n";
+	send(s, buf2, strlen(buf2), 0);
+
+	long bytesRead = 1;
+	const int buf_len = 1024;
+	char recv_buffer[buf_len];
+	std::string line;
+	bool wantRead = true;
+	bool success = false;
+
+	line = "";
+	while (wantRead == true && bytesRead > 0)
+	{
+		// -1 damit \0 ans Ende kann
+		int bytesRead = recv(s, recv_buffer, buf_len - 1, 0);
+
+		if (bytesRead == 0)
+		{
+			DebugPrint("Server hat die Verbindung getrennt..\n");
+		}
+		else if (bytesRead == SOCKET_ERROR)
+		{
+			DebugPrint("Fehler: recv, fehler code: %d\n", WSAGetLastError());
+		}
+		else if (bytesRead > 0)
+		{
+			//DebugPrint("\nServer antwortet mit %ld Bytes\n", bytesRead);
+
+			for (int i = 0; i < bytesRead; i++)
+			{
+				//if(recv_buffer[i] == '\0')DebugPrint("Found 0");
+				if (recv_buffer[i] == '\r')
+				{
+					//DebugPrint("Found: r\n");
+				}
+				else if (recv_buffer[i] == '\n')
+				{
+					//DebugPrint("Found: n\n");
+					DebugPrint("Last Line: %s\n", line.c_str());
+
+					if (line.substr(0, 5) == "error") {
+						wantRead = false;
+
+						if (line.find("msg=ok")) {
+							success = true;
+						}
+
+						break;
+					}
+
+					line = "";
+				}
+				else
+				{
+					line += recv_buffer[i];
+				}
+				//if (recv_buffer[i] == '\r\n')DebugPrint("Found rn");
+			}
+
+			//recv_buffer[bytesRead] = '\0';
+			//DebugPrint("Server antwortet: %s\n", recv_buffer);
+			// do something with the bytes.  Note you cannot guarantee that the buffer contains a valid C string.
+
+			if (success) {
+				DebugPrint("success");
+			} else {
+				DebugPrint("fail");
+			}
+		}
+	}
+
+	//buf[rc] = '\0';
+	//DebugPrint("\nServer antwortet: %s\n", buf);
+
+
+	closesocket(s);
+	WSACleanup();
 }
 
 void MyStreamDeckPlugin::KeyUpForAction(const std::string& inAction, const std::string& inContext, const json &inPayload, const std::string& inDeviceID)
 {
 	// Nothing to do
+	//DebugPrint("Test2");
+	//mConnectionManager->LogMessage("Test2");
 }
 
 void MyStreamDeckPlugin::WillAppearForAction(const std::string& inAction, const std::string& inContext, const json &inPayload, const std::string& inDeviceID)
