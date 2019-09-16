@@ -12,6 +12,7 @@
 
 #include "MyStreamDeckPlugin.h"
 #include <atomic>
+#include <map>
 
 #ifdef __APPLE__
 	#include "macOS/CpuUsageHelper.h"
@@ -112,17 +113,31 @@ void MyStreamDeckPlugin::UpdateTimer()
 	}
 }
 
+std::vector<std::string> split(std::string string, char delimeter)
+{
+	std::stringstream ss(string);
+	std::string item;
+	std::vector<std::string> splittedStrings;
+	while (std::getline(ss, item, delimeter))
+	{
+		splittedStrings.push_back(item);
+	}
+	return splittedStrings;
+}
+
 void MyStreamDeckPlugin::KeyDownForAction(const std::string& inAction, const std::string& inContext, const json &inPayload, const std::string& inDeviceID)
 {
-	// Nothing to do
-	DebugPrint("KeyDownForAction");
+	DebugPrint("KeyDownForAction\n");
+	DebugPrint("inAction: %s\n", inAction.c_str());
+	//DebugPrint("inContext: %s\n", inContext.c_str());
+	//DebugPrint("inDeviceID: %s\n", inDeviceID.c_str());
 	//mConnectionManager->LogMessage("Test1");
 
 	WSADATA wsa;
 	long rc;
 	SOCKET s;
 	SOCKADDR_IN addr;
-	char buf[256];
+	//char buf[256];
 
 	// Winsock starten
 	rc = WSAStartup(MAKEWORD(2, 0), &wsa);
@@ -165,11 +180,36 @@ void MyStreamDeckPlugin::KeyDownForAction(const std::string& inAction, const std
 		DebugPrint("Verbunden mit 127.0.0.1..\n");
 	}
 
-
 	// Daten austauschen
 	//strcpy_s(buf, 5, "help");
-	char buf2[256] = "help\n";
-	send(s, buf2, strlen(buf2), 0);
+	//char help[256] = "help\n";
+	//send(s, help, strlen(help), 0);
+
+	/*
+	char help[256] = "help\n";
+	send(s, help, strlen(help), 0);
+	*/
+
+	char auth[256] = "auth apikey=2I7E-OY65-MFW8-7ILV-7PXM-NE81\n";
+	send(s, auth, strlen(auth), 0);
+
+	/*
+	if(inAction == "de.kevinbirke.teamspeak.mute"){
+		char clientupdate[256] = "clientupdate client_input_muted=1\n";
+		send(s, clientupdate, strlen(clientupdate), 0);
+	}
+
+	if (inAction == "de.kevinbirke.teamspeak.unmute") {
+		char clientupdate[256] = "clientupdate client_input_muted=0\n";
+		send(s, clientupdate, strlen(clientupdate), 0);
+	}
+	*/
+	
+	//Prevent connection shutdown until commands are executed
+	//Sleep(100);
+
+	char whoami[256] = "whoami\n";
+	send(s, whoami, strlen(whoami), 0);
 
 	long bytesRead = 1;
 	const int buf_len = 1024;
@@ -177,6 +217,8 @@ void MyStreamDeckPlugin::KeyDownForAction(const std::string& inAction, const std
 	std::string line;
 	bool wantRead = true;
 	bool success = false;
+
+	std::unordered_map<std::string, std::string> result;
 
 	line = "";
 	while (wantRead == true && bytesRead > 0)
@@ -217,6 +259,25 @@ void MyStreamDeckPlugin::KeyDownForAction(const std::string& inAction, const std
 
 						break;
 					}
+					else if (line.find("=") != std::string::npos)
+					{
+						std::vector<std::string> tokens = split(line, ' ');
+
+						for (auto const& line_part : tokens)
+						{
+							if (line_part.find("=") != std::string::npos)
+							{
+								std::vector<std::string> result_part = split(line, '=');
+
+								if (result_part.size() != 2) {
+									DebugPrint("result_part != 2");
+									exit(1);
+								}
+
+								result[result_part[0]] = result_part[1];
+							}
+						}
+					}
 
 					line = "";
 				}
@@ -230,13 +291,17 @@ void MyStreamDeckPlugin::KeyDownForAction(const std::string& inAction, const std
 			//recv_buffer[bytesRead] = '\0';
 			//DebugPrint("Server antwortet: %s\n", recv_buffer);
 			// do something with the bytes.  Note you cannot guarantee that the buffer contains a valid C string.
-
-			if (success) {
-				DebugPrint("success");
-			} else {
-				DebugPrint("fail");
-			}
 		}
+	}
+
+	if (success)
+	{
+		DebugPrint("success\n");
+		DebugPrint("result clid: %s\n", result["clid"].c_str());
+	}
+	else
+	{
+		DebugPrint("fail\n");
 	}
 
 	//buf[rc] = '\0';
