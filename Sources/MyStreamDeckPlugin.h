@@ -43,4 +43,6 @@ private:
 	
 	CpuUsageHelper *mCpuUsageHelper = nullptr;
 	CallBackTimer *mTimer;
+
+	std::unordered_map<std::string, std::string> run_client_query(SOCKET s, std::string command);
 };

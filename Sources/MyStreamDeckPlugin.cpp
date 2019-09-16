@@ -125,6 +125,107 @@ std::vector<std::string> split(std::string string, char delimeter)
 	return splittedStrings;
 }
 
+std::unordered_map<std::string, std::string> MyStreamDeckPlugin::run_client_query(SOCKET s, std::string command)
+{
+	// Add new line to command
+	std::string command_send = command + '\n';
+
+	send(s, command_send.c_str(), strlen(command_send.c_str()), 0);
+
+	//Prevent connection shutdown until commands are executed
+	//Sleep(100);
+
+	long bytesRead = 1;
+	const int buf_len = 1024;
+	char recv_buffer[buf_len];
+	std::string line;
+	std::unordered_map<std::string, std::string> result;
+
+	line = "";
+	while (bytesRead > 0)
+	{
+		// -1 damit \0 ans Ende kann
+		int bytesRead = recv(s, recv_buffer, buf_len - 1, 0);
+
+		if (bytesRead == 0)
+		{
+			DebugPrint("Server hat die Verbindung getrennt..\n");
+		}
+		else if (bytesRead == SOCKET_ERROR)
+		{
+			DebugPrint("Fehler: recv, fehler code: %d\n", WSAGetLastError());
+		}
+		else if (bytesRead > 0)
+		{
+			//DebugPrint("\nServer antwortet mit %ld Bytes\n", bytesRead);
+
+			for (int i = 0; i < bytesRead; i++)
+			{
+				//if(recv_buffer[i] == '\0')DebugPrint("Found 0");
+				if (recv_buffer[i] == '\r')
+				{
+					//DebugPrint("Found: r\n");
+				}
+				else if (recv_buffer[i] == '\n')
+				{
+					//DebugPrint("Found: n\n");
+					DebugPrint("Last Line: %s\n", line.c_str());
+
+					if (line.substr(0, 5) == "error") {
+						if (line.find("msg=ok"))
+						{
+							DebugPrint("success\n");
+						}
+						else
+						{
+							DebugPrint("fail\n");
+						}
+
+						return result;
+					}
+					else if (line.find("=") != std::string::npos)
+					{
+						std::vector<std::string> tokens = split(line, ' ');
+
+						DebugPrint("Found %d tokens\n", tokens.size());
+
+						for (auto const& line_part : tokens)
+						{
+							if (line_part.find("=") != std::string::npos)
+							{
+								std::vector<std::string> result_part = split(line_part, '=');
+
+								if (result_part.size() != 2) {
+									DebugPrint("result_part is not 2 it is %d\n", result_part.size());
+									exit(1);
+								}
+
+								result[result_part[0]] = result_part[1];
+							}
+						}
+					}
+
+					line = "";
+				}
+				else
+				{
+					line += recv_buffer[i];
+				}
+				//if (recv_buffer[i] == '\r\n')DebugPrint("Found rn");
+			}
+
+			//recv_buffer[bytesRead] = '\0';
+			//DebugPrint("Server antwortet: %s\n", recv_buffer);
+			// do something with the bytes.  Note you cannot guarantee that the buffer contains a valid C string.
+		}
+	}
+
+	//buf[rc] = '\0';
+	//DebugPrint("\nServer antwortet: %s\n", buf);
+}
+
+
+
 void MyStreamDeckPlugin::KeyDownForAction(const std::string& inAction, const std::string& inContext, const json &inPayload, const std::string& inDeviceID)
 {
 	DebugPrint("KeyDownForAction\n");
@@ -133,11 +234,22 @@ void MyStreamDeckPlugin::KeyDownForAction(const std::string& inAction, const std
 	//DebugPrint("inDeviceID: %s\n", inDeviceID.c_str());
 	//mConnectionManager->LogMessage("Test1");
 
+	/*
+	if(inAction == "de.kevinbirke.teamspeak.mute"){
+		char clientupdate[256] = "clientupdate client_input_muted=1\n";
+		send(s, clientupdate, strlen(clientupdate), 0);
+	}
+
+	if (inAction == "de.kevinbirke.teamspeak.unmute") {
+		char clientupdate[256] = "clientupdate client_input_muted=0\n";
+		send(s, clientupdate, strlen(clientupdate), 0);
+	}
+	*/
+
 	WSADATA wsa;
 	long rc;
 	SOCKET s;
 	SOCKADDR_IN addr;
-	//char buf[256];
 
 	// Winsock starten
 	rc = WSAStartup(MAKEWORD(2, 0), &wsa);
@@ -180,133 +292,14 @@ void MyStreamDeckPlugin::KeyDownForAction(const std::string& inAction, const std
 		DebugPrint("Verbunden mit 127.0.0.1..\n");
 	}
 
-	// Daten austauschen
-	//strcpy_s(buf, 5, "help");
-	//char help[256] = "help\n";
-	//send(s, help, strlen(help), 0);
-
-	/*
-	char help[256] = "help\n";
-	send(s, help, strlen(help), 0);
-	*/
-
-	char auth[256] = "auth apikey=2I7E-OY65-MFW8-7ILV-7PXM-NE81\n";
-	send(s, auth, strlen(auth), 0);
-
-	/*
-	if(inAction == "de.kevinbirke.teamspeak.mute"){
-		char clientupdate[256] = "clientupdate client_input_muted=1\n";
-		send(s, clientupdate, strlen(clientupdate), 0);
-	}
-
-	if (inAction == "de.kevinbirke.teamspeak.unmute") {
-		char clientupdate[256] = "clientupdate client_input_muted=0\n";
-		send(s, clientupdate, strlen(clientupdate), 0);
-	}
-	*/
-	
-	//Prevent connection shutdown until commands are executed
-	//Sleep(100);
-
-	char whoami[256] = "whoami\n";
-	send(s, whoami, strlen(whoami), 0);
-
-	long bytesRead = 1;
-	const int buf_len = 1024;
-	char recv_buffer[buf_len];
-	std::string line;
-	bool wantRead = true;
-	bool success = false;
-
+	//
+	//Aufruf run_command
+	//
 	std::unordered_map<std::string, std::string> result;
+	result = run_client_query(s, "auth apikey=2I7E-OY65-MFW8-7ILV-7PXM-NE81");
+	result = run_client_query(s, "whoami");
 
-	line = "";
-	while (wantRead == true && bytesRead > 0)
-	{
-		// -1 damit \0 ans Ende kann
-		int bytesRead = recv(s, recv_buffer, buf_len - 1, 0);
-
-		if (bytesRead == 0)
-		{
-			DebugPrint("Server hat die Verbindung getrennt..\n");
-		}
-		else if (bytesRead == SOCKET_ERROR)
-		{
-			DebugPrint("Fehler: recv, fehler code: %d\n", WSAGetLastError());
-		}
-		else if (bytesRead > 0)
-		{
-			//DebugPrint("\nServer antwortet mit %ld Bytes\n", bytesRead);
-
-			for (int i = 0; i < bytesRead; i++)
-			{
-				//if(recv_buffer[i] == '\0')DebugPrint("Found 0");
-				if (recv_buffer[i] == '\r')
-				{
-					//DebugPrint("Found: r\n");
-				}
-				else if (recv_buffer[i] == '\n')
-				{
-					//DebugPrint("Found: n\n");
-					DebugPrint("Last Line: %s\n", line.c_str());
-
-					if (line.substr(0, 5) == "error") {
-						wantRead = false;
-
-						if (line.find("msg=ok")) {
-							success = true;
-						}
-
-						break;
-					}
-					else if (line.find("=") != std::string::npos)
-					{
-						std::vector<std::string> tokens = split(line, ' ');
-
-						for (auto const& line_part : tokens)
-						{
-							if (line_part.find("=") != std::string::npos)
-							{
-								std::vector<std::string> result_part = split(line, '=');
-
-								if (result_part.size() != 2) {
-									DebugPrint("result_part != 2");
-									exit(1);
-								}
-
-								result[result_part[0]] = result_part[1];
-							}
-						}
-					}
-
-					line = "";
-				}
-				else
-				{
-					line += recv_buffer[i];
-				}
-				//if (recv_buffer[i] == '\r\n')DebugPrint("Found rn");
-			}
-
-			//recv_buffer[bytesRead] = '\0';
-			//DebugPrint("Server antwortet: %s\n", recv_buffer);
-			// do something with the bytes.  Note you cannot guarantee that the buffer contains a valid C string.
-		}
-	}
-
-	if (success)
-	{
-		DebugPrint("success\n");
-		DebugPrint("result clid: %s\n", result["clid"].c_str());
-	}
-	else
-	{
-		DebugPrint("fail\n");
-	}
-
-	//buf[rc] = '\0';
-	//DebugPrint("\nServer antwortet: %s\n", buf);
-
+	DebugPrint("result clid: %s\n", result["clid"].c_str());
 
 	closesocket(s);
 	WSACleanup();
