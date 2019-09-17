@@ -295,11 +295,21 @@ void MyStreamDeckPlugin::KeyDownForAction(const std::string& inAction, const std
 	//
 	//Aufruf run_command
 	//
-	std::unordered_map<std::string, std::string> result;
-	result = run_client_query(s, "auth apikey=2I7E-OY65-MFW8-7ILV-7PXM-NE81");
-	result = run_client_query(s, "whoami");
-
-	DebugPrint("result clid: %s\n", result["clid"].c_str());
+	std::string apikey = "2I7E-OY65-MFW8-7ILV-7PXM-NE81";
+	run_client_query(s, "auth apikey=" + apikey);
+	std::unordered_map<std::string, std::string> whoami_result = run_client_query(s, "whoami");
+	//DebugPrint("result clid: %s\n", whoami_result["clid"].c_str());
+	std::unordered_map<std::string, std::string> clientvariable_result = run_client_query(s, "clientvariable clid=" + whoami_result["clid"] + " client_input_muted");
+	//DebugPrint("result client_input_muted: %s\n", clientvariable_result["client_input_muted"].c_str());
+	
+	if (clientvariable_result["client_input_muted"] == "0") 
+	{
+		run_client_query(s, "clientupdate client_input_muted=1");
+	}
+	else if (clientvariable_result["client_input_muted"] == "1") 
+	{
+		run_client_query(s, "clientupdate client_input_muted=0");
+	}
 
 	closesocket(s);
 	WSACleanup();
