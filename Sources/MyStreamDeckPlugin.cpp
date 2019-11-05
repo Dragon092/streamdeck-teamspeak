@@ -203,22 +203,34 @@ void MyStreamDeckPlugin::KeyDownForAction(const std::string& inAction, const std
 		DebugPrint("Verbunden mit 127.0.0.1..\n");
 	}
 
+	if (apikey == "") {
+		DebugPrint("No API Key set");
+		return;
+	}
+
 	//
 	//Aufruf run_command
 	//
-	std::string apikey = "2I7E-OY65-MFW8-7ILV-7PXM-NE81";
 	run_client_query(s, "auth apikey=" + apikey);
 	std::unordered_map<std::string, std::string> whoami_result = run_client_query(s, "whoami");
 	//DebugPrint("result clid: %s\n", whoami_result["clid"].c_str());
 	std::unordered_map<std::string, std::string> clientvariable_result = run_client_query(s, "clientvariable clid=" + whoami_result["clid"] + " client_input_muted");
 	//DebugPrint("result client_input_muted: %s\n", clientvariable_result["client_input_muted"].c_str());
 	
-	if (clientvariable_result["client_input_muted"] == "0") 
-	{
+	if(mode == "toggle"){
+		if (clientvariable_result["client_input_muted"] == "0") 
+		{
+			run_client_query(s, "clientupdate client_input_muted=1");
+		}
+		else if (clientvariable_result["client_input_muted"] == "1") 
+		{
+			run_client_query(s, "clientupdate client_input_muted=0");
+		}
+	}
+	else if (mode == "mute") {
 		run_client_query(s, "clientupdate client_input_muted=1");
 	}
-	else if (clientvariable_result["client_input_muted"] == "1") 
-	{
+	else if (mode == "unmute") {
 		run_client_query(s, "clientupdate client_input_muted=0");
 	}
 
@@ -262,4 +274,27 @@ void MyStreamDeckPlugin::DeviceDidDisconnect(const std::string& inDeviceID)
 void MyStreamDeckPlugin::SendToPlugin(const std::string& inAction, const std::string& inContext, const json &inPayload, const std::string& inDeviceID)
 {
 	// Nothing to do
+}
+
+void MyStreamDeckPlugin::DidReceiveSettings(const std::string& inAction, const std::string& inContext, const json& inPayload, const std::string& inDeviceID)
+{
+	DebugPrint("DidReceiveSettings\n");
+	DebugPrint("inPayload: %s\n", inPayload.dump().c_str());
+
+	DebugPrint("Done\n");
+	
+	if (inPayload["settings"] == NULL) {
+		DebugPrint("settings is null\n");
+		return;
+	}
+
+	if (inPayload["settings"]["apikey"] != NULL) {
+		apikey = inPayload["settings"]["apikey"];
+		DebugPrint("apikey: %s\n", apikey.c_str());
+	}
+
+	if (inPayload["settings"]["mode"] != NULL) {
+		mode = inPayload["settings"]["mode"];
+		DebugPrint("mode: %s\n", mode.c_str());
+	}
 }

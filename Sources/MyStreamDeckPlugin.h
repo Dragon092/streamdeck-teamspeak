@@ -13,7 +13,6 @@
 #include "Common/ESDBasePlugin.h"
 #include <mutex>
 
-
 class MyStreamDeckPlugin : public ESDBasePlugin
 {
 public:
@@ -32,12 +31,14 @@ public:
 	
 	void SendToPlugin(const std::string& inAction, const std::string& inContext, const json &inPayload, const std::string& inDeviceID) override;
 
+	void DidReceiveSettings(const std::string& inAction, const std::string& inContext, const json& inPayload, const std::string& inDeviceID) override;
+
 private:
-	
-	
 	std::mutex mVisibleContextsMutex;
 	std::set<std::string> mVisibleContexts;
 	
+	std::string apikey = "";
+	std::string mode = "toggle";
 
 	std::unordered_map<std::string, std::string> run_client_query(SOCKET s, std::string command);
 };
