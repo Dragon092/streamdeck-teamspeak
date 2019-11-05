@@ -13,8 +13,6 @@
 #include "Common/ESDBasePlugin.h"
 #include <mutex>
 
-class CpuUsageHelper;
-class CallBackTimer;
 
 class MyStreamDeckPlugin : public ESDBasePlugin
 {
@@ -36,13 +34,10 @@ public:
 
 private:
 	
-	void UpdateTimer();
 	
 	std::mutex mVisibleContextsMutex;
 	std::set<std::string> mVisibleContexts;
 	
-	CpuUsageHelper *mCpuUsageHelper = nullptr;
-	CallBackTimer *mTimer;
 
 	std::unordered_map<std::string, std::string> run_client_query(SOCKET s, std::string command);
 };
