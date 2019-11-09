@@ -157,6 +157,7 @@ void MyStreamDeckPlugin::KeyDownForAction(const std::string& inAction, const std
 	}
 	*/
 
+	json settings = inPayload["settings"];
 	WSADATA wsa;
 	long rc;
 	SOCKET s;
@@ -203,6 +204,7 @@ void MyStreamDeckPlugin::KeyDownForAction(const std::string& inAction, const std
 		DebugPrint("Verbunden mit 127.0.0.1..\n");
 	}
 
+	std::string apikey = settings.value("apikey", "");
 	if (apikey == "") {
 		DebugPrint("No API Key set");
 		return;
@@ -279,22 +281,7 @@ void MyStreamDeckPlugin::SendToPlugin(const std::string& inAction, const std::st
 void MyStreamDeckPlugin::DidReceiveSettings(const std::string& inAction, const std::string& inContext, const json& inPayload, const std::string& inDeviceID)
 {
 	DebugPrint("DidReceiveSettings\n");
-	DebugPrint("inPayload: %s\n", inPayload.dump().c_str());
+	//DebugPrint("inPayload: %s\n", inPayload.dump().c_str());
 
-	DebugPrint("Done\n");
-	
-	if (inPayload["settings"] == NULL) {
-		DebugPrint("settings is null\n");
-		return;
-	}
-
-	if (inPayload["settings"]["apikey"] != NULL) {
-		apikey = inPayload["settings"]["apikey"];
-		DebugPrint("apikey: %s\n", apikey.c_str());
-	}
-
-	if (inPayload["settings"]["mode"] != NULL) {
-		mode = inPayload["settings"]["mode"];
-		DebugPrint("mode: %s\n", mode.c_str());
-	}
+	//DebugPrint("Done\n");
 }
