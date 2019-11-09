@@ -137,7 +137,7 @@ std::unordered_map<std::string, std::string> MyStreamDeckPlugin::run_client_quer
 
 
 
-void MyStreamDeckPlugin::KeyDownForAction(const std::string& inAction, const std::string& inContext, const json &inPayload, const std::string& inDeviceID)
+void MyStreamDeckPlugin::KeyDownForAction(const std::string& inAction, const std::string& inContext, const json& inPayload, const std::string& inDeviceID)
 {
 	DebugPrint("KeyDownForAction\n");
 	DebugPrint("inAction: %s\n", inAction.c_str());
@@ -158,6 +158,7 @@ void MyStreamDeckPlugin::KeyDownForAction(const std::string& inAction, const std
 	*/
 
 	json settings = inPayload["settings"];
+
 	WSADATA wsa;
 	long rc;
 	SOCKET s;
@@ -205,6 +206,7 @@ void MyStreamDeckPlugin::KeyDownForAction(const std::string& inAction, const std
 	}
 
 	std::string apikey = settings.value("apikey", "");
+
 	if (apikey == "") {
 		DebugPrint("No API Key set");
 		return;
@@ -216,24 +218,76 @@ void MyStreamDeckPlugin::KeyDownForAction(const std::string& inAction, const std
 	run_client_query(s, "auth apikey=" + apikey);
 	std::unordered_map<std::string, std::string> whoami_result = run_client_query(s, "whoami");
 	//DebugPrint("result clid: %s\n", whoami_result["clid"].c_str());
-	std::unordered_map<std::string, std::string> clientvariable_result = run_client_query(s, "clientvariable clid=" + whoami_result["clid"] + " client_input_muted");
-	//DebugPrint("result client_input_muted: %s\n", clientvariable_result["client_input_muted"].c_str());
-	
-	if(mode == "toggle"){
-		if (clientvariable_result["client_input_muted"] == "0") 
-		{
+
+	if (inAction == "de.kevinbirke.teamspeak.microphone") {
+		std::string microphone_mode = settings.value("microphone_mode", "toggle");
+
+		if (microphone_mode == "toggle") {
+			std::unordered_map<std::string, std::string> clientvariable_result = run_client_query(s, "clientvariable clid=" + whoami_result["clid"] + " client_input_muted");
+			//DebugPrint("result client_input_muted: %s\n", clientvariable_result["client_input_muted"].c_str());
+
+			if (clientvariable_result["client_input_muted"] == "0")
+			{
+				run_client_query(s, "clientupdate client_input_muted=1");
+			}
+			else if (clientvariable_result["client_input_muted"] == "1")
+			{
+				run_client_query(s, "clientupdate client_input_muted=0");
+			}
+			else {
+				
+			}
+		}
+		else if (microphone_mode == "mute") {
 			run_client_query(s, "clientupdate client_input_muted=1");
 		}
-		else if (clientvariable_result["client_input_muted"] == "1") 
-		{
+		else if (microphone_mode == "unmute") {
 			run_client_query(s, "clientupdate client_input_muted=0");
 		}
-	}
-	else if (mode == "mute") {
-		run_client_query(s, "clientupdate client_input_muted=1");
-	}
-	else if (mode == "unmute") {
-		run_client_query(s, "clientupdate client_input_muted=0");
+	} else if (inAction == "de.kevinbirke.teamspeak.sound") {
+		std::string sound_mode = settings.value("sound_mode", "toggle");
+
+		if (sound_mode == "toggle") {
+			std::unordered_map<std::string, std::string> clientvariable_result = run_client_query(s, "clientvariable clid=" + whoami_result["clid"] + " client_output_muted");
+			//DebugPrint("result client_input_muted: %s\n", clientvariable_result["client_input_muted"].c_str());
+
+			if (clientvariable_result["client_output_muted"] == "0")
+			{
+				run_client_query(s, "clientupdate client_output_muted=1");
+			}
+			else if (clientvariable_result["client_output_muted"] == "1")
+			{
+				run_client_query(s, "clientupdate client_output_muted=0");
+			}
+		}
+		else if (sound_mode == "mute") {
+			run_client_query(s, "clientupdate client_output_muted=1");
+		}
+		else if (sound_mode == "unmute") {
+			run_client_query(s, "clientupdate client_output_muted=0");
+		}
+	} else if (inAction == "de.kevinbirke.teamspeak.afk") {
+		std::string afk_mode = settings.value("afk_mode", "toggle");
+
+		if (afk_mode == "toggle") {
+			std::unordered_map<std::string, std::string> clientvariable_result = run_client_query(s, "clientvariable clid=" + whoami_result["clid"] + " client_away");
+			//DebugPrint("result client_input_muted: %s\n", clientvariable_result["client_input_muted"].c_str());
+
+			if (clientvariable_result["client_away"] == "0")
+			{
+				run_client_query(s, "clientupdate client_away=1");
+			}
+			else if (clientvariable_result["client_away"] == "1")
+			{
+				run_client_query(s, "clientupdate client_away=0");
+			}
+		}
+		else if (afk_mode == "away") {
+			run_client_query(s, "clientupdate client_away=1");
+		}
+		else if (afk_mode == "back") {
+			run_client_query(s, "clientupdate client_away=0");
+		}
 	}
 
 	closesocket(s);
