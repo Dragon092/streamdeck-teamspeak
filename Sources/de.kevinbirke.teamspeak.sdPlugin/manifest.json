@@ -1,0 +1,63 @@
+{
+  "Actions": [
+    {
+      "Icon": "icons/microphone", 
+      "Name": "Microphone", 
+      "States": [
+        {
+          "Image": "icons/microphone",
+          "TitleAlignment": "middle", 
+          "FontSize": "17"
+        }
+      ], 
+      "Tooltip": "Control your microphone.", 
+      "UUID": "de.kevinbirke.teamspeak.microphone"
+    },
+    {
+      "Icon": "icons/sound", 
+      "Name": "Sound", 
+      "States": [
+        {
+          "Image": "icons/sound",
+          "TitleAlignment": "middle", 
+          "FontSize": "17"
+        }
+      ], 
+      "Tooltip": "Control your sound.", 
+      "UUID": "de.kevinbirke.teamspeak.sound"
+    },
+    {
+      "Icon": "icons/afk", 
+      "Name": "AFK", 
+      "States": [
+        {
+          "Image": "icons/afk",
+          "TitleAlignment": "middle", 
+          "FontSize": "17"
+        }
+      ], 
+      "Tooltip": "Control your AFK status.", 
+      "UUID": "de.kevinbirke.teamspeak.afk"
+    }
+  ], 
+  "SDKVersion": 2,
+  "Author": "Dragon", 
+  "CodePathWin": "teamspeak.exe", 
+  "PropertyInspectorPath": "propertyinspector/index.html",
+  "Description": "Description.", 
+  "Name": "TeamSpeak", 
+  "Icon": "icons/microphone", 
+  "Category": "TeamSpeak",
+  "URL": "https://kevinbirke.de", 
+  "Version": "0.1",
+  "OS": [
+    {
+        "Platform": "windows", 
+        "MinimumVersion" : "10"
+    }
+  ],
+  "Software": 
+    {
+        "MinimumVersion" : "4.1"
+    }
+}
