@@ -217,7 +217,10 @@ void MyStreamDeckPlugin::KeyDownForAction(const std::string& inAction, const std
 	//
 	//Aufruf run_command
 	//
+	// Authenticate ClientQuery
 	run_client_query(s, "auth apikey=" + apikey);
+	// Get client id
+	//TODO: Does not work if disconnected
 	std::unordered_map<std::string, std::string> whoami_result = run_client_query(s, "whoami");
 	//DebugPrint("result clid: %s\n", whoami_result["clid"].c_str());
 
