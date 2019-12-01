@@ -13,6 +13,9 @@
 #ifndef PCH_H
 #define PCH_H
 
+// On Windows disable the MIN/MAX defines from windows.h
+#define NOMINMAX
+
 //-------------------------------------------------------------------
 // C++ headers
 //-------------------------------------------------------------------
@@ -22,6 +25,8 @@
 #include <string>
 #include <set>
 #include <thread>
+#include <iostream>
+#include <fstream>
 #include <strsafe.h>
 
 

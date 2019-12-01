@@ -33,9 +33,14 @@ public:
 
 	void DidReceiveSettings(const std::string& inAction, const std::string& inContext, const json& inPayload, const std::string& inDeviceID) override;
 
+	void SetTitle(const std::string& inTitle, const std::string& inContext);
+	void SetImage(const std::string& inImage, const std::string& inContext);
+
 private:
 	std::mutex mVisibleContextsMutex;
 	std::set<std::string> mVisibleContexts;
 
 	std::unordered_map<std::string, std::string> run_client_query(SOCKET s, std::string command);
+
+	static bool GetEncodedIconStringFromFile(const std::string& inName, std::string& outFileString);
 };

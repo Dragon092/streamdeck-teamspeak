@@ -15,6 +15,8 @@
 #include <map>
 
 #include "Common/ESDConnectionManager.h"
+#include "Common/ESDUtilities.h"
+#include "Vendor/cppcodec/cppcodec/base64_rfc4648.hpp"
 
 MyStreamDeckPlugin::MyStreamDeckPlugin()
 {
@@ -338,4 +340,42 @@ void MyStreamDeckPlugin::DidReceiveSettings(const std::string& inAction, const s
 	//DebugPrint("inPayload: %s\n", inPayload.dump().c_str());
 
 	//DebugPrint("Done\n");
+}
+
+void MyStreamDeckPlugin::SetTitle(const std::string& inTitle, const std::string& inContext)
+{
+	if (mConnectionManager != nullptr)
+		mConnectionManager->SetTitle(inTitle, inContext, kESDSDKTarget_HardwareAndSoftware);
+}
+
+void MyStreamDeckPlugin::SetImage(const std::string& inImage, const std::string& inContext)
+{
+	if (mConnectionManager != nullptr)
+		mConnectionManager->SetImage(inImage, inContext, kESDSDKTarget_HardwareAndSoftware);
+}
+
+// Helper method, reads file into base64 encoded string
+bool MyStreamDeckPlugin::GetEncodedIconStringFromFile(const std::string& inName, std::string& outFileString)
+{
+	bool success = false;
+	std::ifstream pngFile(inName, std::ios::binary | std::ios::ate);
+	if (pngFile.is_open())
+	{
+		std::ifstream::pos_type pos = pngFile.tellg();
+
+		std::vector<char> result(pos);
+
+		pngFile.seekg(0, std::ios::beg);
+		pngFile.read(&result[0], pos);
+
+		std::string base64encodedImage = cppcodec::base64_rfc4648::encode(&result[0], result.size());
+		outFileString = base64encodedImage;
+		success = true;
+	}
+	else
+	{
+		success = false;
+		DebugPrint("Could not load icon: %s", inName.c_str());
+	}
+	return success;
 }
