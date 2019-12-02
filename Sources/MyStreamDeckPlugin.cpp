@@ -16,6 +16,7 @@
 
 #include "Common/ESDConnectionManager.h"
 #include "Common/ESDUtilities.h"
+
 #include "Vendor/cppcodec/cppcodec/base64_rfc4648.hpp"
 
 MyStreamDeckPlugin::MyStreamDeckPlugin()
@@ -143,7 +144,7 @@ void MyStreamDeckPlugin::KeyDownForAction(const std::string& inAction, const std
 {
 	DebugPrint("KeyDownForAction\n");
 	DebugPrint("inAction: %s\n", inAction.c_str());
-	//DebugPrint("inContext: %s\n", inContext.c_str());
+	DebugPrint("inContext: %s\n", inContext.c_str());
 	//DebugPrint("inDeviceID: %s\n", inDeviceID.c_str());
 	//mConnectionManager->LogMessage("Test1");
 
@@ -165,6 +166,8 @@ void MyStreamDeckPlugin::KeyDownForAction(const std::string& inAction, const std
 	long rc;
 	SOCKET s;
 	SOCKADDR_IN addr;
+
+	std::string new_icon = "";
 
 	// Winsock starten
 	rc = WSAStartup(MAKEWORD(2, 0), &wsa);
@@ -219,6 +222,7 @@ void MyStreamDeckPlugin::KeyDownForAction(const std::string& inAction, const std
 	//
 	// Authenticate ClientQuery
 	run_client_query(s, "auth apikey=" + apikey);
+
 	// Get client id
 	//TODO: Does not work if disconnected
 	std::unordered_map<std::string, std::string> whoami_result = run_client_query(s, "whoami");
@@ -234,13 +238,12 @@ void MyStreamDeckPlugin::KeyDownForAction(const std::string& inAction, const std
 			if (clientvariable_result["client_input_muted"] == "0")
 			{
 				run_client_query(s, "clientupdate client_input_muted=1");
+				new_icon = "microphone_muted.png";
 			}
 			else if (clientvariable_result["client_input_muted"] == "1")
 			{
 				run_client_query(s, "clientupdate client_input_muted=0");
-			}
-			else {
-				
+				new_icon = "microphone.png";
 			}
 		}
 		else if (microphone_mode == "mute") {
@@ -259,10 +262,12 @@ void MyStreamDeckPlugin::KeyDownForAction(const std::string& inAction, const std
 			if (clientvariable_result["client_output_muted"] == "0")
 			{
 				run_client_query(s, "clientupdate client_output_muted=1");
+				new_icon = "sound_muted.png";
 			}
 			else if (clientvariable_result["client_output_muted"] == "1")
 			{
 				run_client_query(s, "clientupdate client_output_muted=0");
+				new_icon = "sound.png";
 			}
 		}
 		else if (sound_mode == "mute") {
@@ -281,10 +286,12 @@ void MyStreamDeckPlugin::KeyDownForAction(const std::string& inAction, const std
 			if (clientvariable_result["client_away"] == "0")
 			{
 				run_client_query(s, "clientupdate client_away=1");
+				new_icon = "afk_away.png";
 			}
 			else if (clientvariable_result["client_away"] == "1")
 			{
 				run_client_query(s, "clientupdate client_away=0");
+				new_icon = "afk.png";
 			}
 		}
 		else if (afk_mode == "away") {
@@ -293,6 +300,14 @@ void MyStreamDeckPlugin::KeyDownForAction(const std::string& inAction, const std
 		else if (afk_mode == "back") {
 			run_client_query(s, "clientupdate client_away=0");
 		}
+	}
+
+	// Update the icon
+	if(new_icon != ""){
+		std::string pluginPath = ESDUtilities::GetPluginPath();
+		std::string encodedFile;
+		GetEncodedIconStringFromFile(ESDUtilities::AddPathComponent(pluginPath, "icons/" + new_icon), encodedFile);
+		SetImage(encodedFile, inContext);
 	}
 
 	closesocket(s);
