@@ -49,7 +49,7 @@
   "Icon": "icons/microphone", 
   "Category": "TeamSpeak",
   "URL": "https://kevinbirke.de", 
-  "Version": "0.1",
+  "Version": "0.2",
   "OS": [
     {
         "Platform": "windows", 
