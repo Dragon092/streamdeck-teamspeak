@@ -1,0 +1,1 @@
+.\Bin\DistributionTool.exe -b -i Sources\de.kevinbirke.teamspeak.sdPlugin -o Release
